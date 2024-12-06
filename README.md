@@ -7,7 +7,7 @@ Parses NTFS Journal entries in a simple user interface
    - **Inclusions (`&&`)**: Match multiple conditions in a column.
    - **Exclusions (`!!`)**: Exclude specific values from the filter.
    - **OR Conditions (`||`)**: Allow alternative matches in a column.
-2. **Multi-Column Filters**: Dynamically parse `FilterOption:Filter` syntax to target specific columns.
+2. **Multi-Column Filters**: Dynamically parse `FilterOption:Filter` syntax to target specific columns, use `;` between Filter Option and Filter option, `FilterOption1:Filter1;FilterOption2:Filter2`.
 
 ## Example Usage
 - **Basic Search**: `.exe`, this will search by the currently active filtering (the default is name) by if it contains ".exe"
