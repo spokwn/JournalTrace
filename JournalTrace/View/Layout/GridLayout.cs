@@ -75,10 +75,103 @@ namespace JournalTrace.View.Layout
         }
 
         private void btSearch_Click(object sender, EventArgs e)
-        {
-            dataSourceEntries.DefaultView.RowFilter = dataSourceEntries.Columns[comboSearch.SelectedIndex].ColumnName + " LIKE '%" + txtSearch.Text +"%'";
-        }
+{
+    string filterText = txtSearch.Text.Trim();
+    string combinedFilter = "";
 
+    string[] filterConditions;
+    if (filterText.Contains(":"))
+    {
+        filterConditions = filterText.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+    }
+    else
+    {
+        if (comboSearch.SelectedIndex <= 0)
+        {
+            dataSourceEntries.DefaultView.RowFilter = "";
+            return;
+        }
+        string columnName = dataSourceEntries.Columns[comboSearch.SelectedIndex].ColumnName;
+        filterConditions = new[] { $"{columnName}:{filterText}" };
+    }
+
+    foreach (string condition in filterConditions)
+    {
+        string[] parts = condition.Split(new[] { ':' }, 2);
+        if (parts.Length == 2)
+        {
+            string columnName = parts[0].Trim();
+            string filterValue = parts[1].Trim();
+
+            if (dataSourceEntries.Columns.Contains(columnName))
+            {
+                string columnFilter = "";
+
+                if (filterValue.Contains("!!"))
+                {
+                    string[] inclusionAndExclusion = filterValue.Split(new[] { "!!" }, StringSplitOptions.None);
+
+                    if (!string.IsNullOrWhiteSpace(inclusionAndExclusion[0]))
+                    {
+                        columnFilter += $"{columnName} LIKE '%{inclusionAndExclusion[0].Trim()}%' AND ";
+                    }
+
+                    for (int i = 1; i < inclusionAndExclusion.Length; i++)
+                    {
+                        if (!string.IsNullOrWhiteSpace(inclusionAndExclusion[i]))
+                        {
+                            columnFilter += $"{columnName} NOT LIKE '%{inclusionAndExclusion[i].Trim()}%' AND ";
+                        }
+                    }
+
+                    if (columnFilter.EndsWith(" AND "))
+                    {
+                        columnFilter = columnFilter.Substring(0, columnFilter.Length - 5);
+                    }
+                }
+                else if (filterValue.Contains("&&"))
+                {
+                    string[] inclusionParts = filterValue.Split(new[] { "&&" }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (string inclusion in inclusionParts)
+                    {
+                        columnFilter += $"{columnName} LIKE '%{inclusion.Trim()}%' AND ";
+                    }
+
+                    if (columnFilter.EndsWith(" AND "))
+                    {
+                        columnFilter = columnFilter.Substring(0, columnFilter.Length - 5);
+                    }
+                }
+                else if (filterValue.Contains("||"))
+                {
+                    string[] orParts = filterValue.Split(new[] { "||" }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (string orPart in orParts)
+                    {
+                        columnFilter += $"{columnName} LIKE '%{orPart.Trim()}%' OR ";
+                    }
+
+                    if (columnFilter.EndsWith(" OR "))
+                    {
+                        columnFilter = columnFilter.Substring(0, columnFilter.Length - 4);
+                    }
+                }
+                else
+                {
+                    columnFilter = $"{columnName} LIKE '%{filterValue}%'";
+                }
+
+                combinedFilter += "(" + columnFilter + ") AND ";
+            }
+        }
+    }
+
+    if (combinedFilter.EndsWith(" AND "))
+    {
+        combinedFilter = combinedFilter.Substring(0, combinedFilter.Length - 5);
+    }
+
+    dataSourceEntries.DefaultView.RowFilter = combinedFilter;
+}
         private void txtSearch_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
