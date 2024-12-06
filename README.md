@@ -9,11 +9,7 @@ Parses NTFS Journal entries in a simple user interface
    - **OR Conditions (`||`)**: Allow alternative matches in a column.
 2. **Multi-Column Filters**: Dynamically parse `FilterOption:Filter` syntax to target specific columns.
 
-## Benefits
-- Provides a better control on what we're looking for.
-- Increases the customizability of a search.
-
-### Example Usage
+## Example Usage
 - **Basic Search**: `.exe`, this will search by the currently active filtering (the default is name) by if it contains ".exe"
 - **Inclusions**: `name:rundll32&&.pf` this will search any entry on a file that contains "rundll32" and ".pf"
 - **Exclusions**: `name:.exe!!svchost` this will search any entry on a file that contains ".exe" but doesnt contain "svchost"
