@@ -190,6 +190,7 @@
             // 
             this.lbStatusMain.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.lbStatusMain.BackColor = System.Drawing.Color.Transparent;
             this.lbStatusMain.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbStatusMain.Location = new System.Drawing.Point(0, 144);
             this.lbStatusMain.Name = "lbStatusMain";
@@ -201,6 +202,7 @@
             // 
             // lbStatusDesc
             // 
+            this.lbStatusDesc.BackColor = System.Drawing.Color.Transparent;
             this.lbStatusDesc.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbStatusDesc.ForeColor = System.Drawing.SystemColors.ControlDarkDark;
             this.lbStatusDesc.Location = new System.Drawing.Point(203, 168);
@@ -244,6 +246,7 @@
             // flowpInfo
             // 
             this.flowpInfo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.flowpInfo.BackColor = System.Drawing.Color.Transparent;
             this.flowpInfo.Controls.Add(this.lbCountFirst);
             this.flowpInfo.Controls.Add(this.lbCountFirstV);
             this.flowpInfo.Controls.Add(this.lbCountAll);
@@ -252,10 +255,10 @@
             this.flowpInfo.Controls.Add(this.lbCountFilesV);
             this.flowpInfo.Controls.Add(this.lbCountDirectories);
             this.flowpInfo.Controls.Add(this.lbCountDirectoriesV);
-            this.flowpInfo.Location = new System.Drawing.Point(1, 366);
+            this.flowpInfo.Location = new System.Drawing.Point(1, 364);
             this.flowpInfo.Margin = new System.Windows.Forms.Padding(0);
             this.flowpInfo.Name = "flowpInfo";
-            this.flowpInfo.Size = new System.Drawing.Size(643, 19);
+            this.flowpInfo.Size = new System.Drawing.Size(733, 21);
             this.flowpInfo.TabIndex = 14;
             // 
             // lbCountFirst

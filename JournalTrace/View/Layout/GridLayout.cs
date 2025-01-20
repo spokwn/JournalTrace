@@ -5,6 +5,8 @@ using System.Data;
 using System.Windows.Forms;
 using System.Threading.Tasks;
 using JournalTrace.View.Util;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace JournalTrace.View.Layout
 {
@@ -15,7 +17,7 @@ namespace JournalTrace.View.Layout
         public GridLayout(EntryManager mngr)
         {
             this.entryManager = mngr;
-            
+
             InitializeComponent();
 
             comboSearch.SelectedIndex = 1;
@@ -73,105 +75,148 @@ namespace JournalTrace.View.Layout
 
             frm.ShowLayoutOption(true);
         }
-
-        private void btSearch_Click(object sender, EventArgs e)
-{
-    string filterText = txtSearch.Text.Trim();
-    string combinedFilter = "";
-
-    string[] filterConditions;
-    if (filterText.Contains(":"))
-    {
-        filterConditions = filterText.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-    }
-    else
-    {
-        if (comboSearch.SelectedIndex <= 0)
+        private void performSearch()
         {
-            dataSourceEntries.DefaultView.RowFilter = "";
-            return;
-        }
-        string columnName = dataSourceEntries.Columns[comboSearch.SelectedIndex].ColumnName;
-        filterConditions = new[] { $"{columnName}:{filterText}" };
-    }
+            string filterText = txtSearch.Text.Trim();
+            string reasonColumn = "reason";
+            string combinedFilter = "";
 
-    foreach (string condition in filterConditions)
-    {
-        string[] parts = condition.Split(new[] { ':' }, 2);
-        if (parts.Length == 2)
-        {
-            string columnName = parts[0].Trim();
-            string filterValue = parts[1].Trim();
-
-            if (dataSourceEntries.Columns.Contains(columnName))
+            if (!string.IsNullOrWhiteSpace(filterText))
             {
-                string columnFilter = "";
-
-                if (filterValue.Contains("!!"))
+                if (filterText.Contains(":") && !IsValidPath(filterText))
                 {
-                    string[] inclusionAndExclusion = filterValue.Split(new[] { "!!" }, StringSplitOptions.None);
+                    string[] filterConditions = filterText.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (string condition in filterConditions)
+                    {
+                        string[] parts = condition.Split(new[] { ':' }, 2);
+                        if (parts.Length != 2) continue;
 
-                    if (!string.IsNullOrWhiteSpace(inclusionAndExclusion[0]))
-                    {
-                        columnFilter += $"{columnName} LIKE '%{inclusionAndExclusion[0].Trim()}%' AND ";
-                    }
+                        string columnName = parts[0].Trim();
+                        string filterValue = parts[1].Trim();
 
-                    for (int i = 1; i < inclusionAndExclusion.Length; i++)
-                    {
-                        if (!string.IsNullOrWhiteSpace(inclusionAndExclusion[i]))
-                        {
-                            columnFilter += $"{columnName} NOT LIKE '%{inclusionAndExclusion[i].Trim()}%' AND ";
-                        }
-                    }
+                        if (!dataSourceEntries.Columns.Contains(columnName) && !IsValidPath(filterValue))
+                            continue;
 
-                    if (columnFilter.EndsWith(" AND "))
-                    {
-                        columnFilter = columnFilter.Substring(0, columnFilter.Length - 5);
-                    }
-                }
-                else if (filterValue.Contains("&&"))
-                {
-                    string[] inclusionParts = filterValue.Split(new[] { "&&" }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (string inclusion in inclusionParts)
-                    {
-                        columnFilter += $"{columnName} LIKE '%{inclusion.Trim()}%' AND ";
-                    }
-
-                    if (columnFilter.EndsWith(" AND "))
-                    {
-                        columnFilter = columnFilter.Substring(0, columnFilter.Length - 5);
-                    }
-                }
-                else if (filterValue.Contains("||"))
-                {
-                    string[] orParts = filterValue.Split(new[] { "||" }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (string orPart in orParts)
-                    {
-                        columnFilter += $"{columnName} LIKE '%{orPart.Trim()}%' OR ";
-                    }
-
-                    if (columnFilter.EndsWith(" OR "))
-                    {
-                        columnFilter = columnFilter.Substring(0, columnFilter.Length - 4);
+                        string columnFilter = BuildColumnFilter(columnName, filterValue);
+                        if (!string.IsNullOrEmpty(columnFilter))
+                            combinedFilter = AppendFilter(combinedFilter, columnFilter);
                     }
                 }
                 else
                 {
-                    columnFilter = $"{columnName} LIKE '%{filterValue}%'";
+                    string columnName;
+                    string searchValue;
+
+                    if (IsValidPath(filterText))
+                    {
+                        columnName = "directory";
+                        searchValue = filterText;
+                    }
+                    else if (comboSearch.SelectedIndex > 0)
+                    {
+                        columnName = dataSourceEntries.Columns[comboSearch.SelectedIndex].ColumnName;
+                        searchValue = filterText;
+                    }
+                    else
+                    {
+                        dataSourceEntries.DefaultView.RowFilter = "";
+                        return;
+                    }
+
+                    string columnFilter = BuildColumnFilter(columnName, searchValue);
+                    if (!string.IsNullOrEmpty(columnFilter))
+                        combinedFilter = AppendFilter(combinedFilter, columnFilter);
                 }
-
-                combinedFilter += "(" + columnFilter + ") AND ";
             }
+
+            combinedFilter = AppendCheckBoxFilters(combinedFilter, reasonColumn);
+            dataSourceEntries.DefaultView.RowFilter = combinedFilter;
         }
-    }
 
-    if (combinedFilter.EndsWith(" AND "))
+        private bool IsValidPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return false;
+
+            return path.Contains(":\\") ||
+                   path.StartsWith("\\\\") ||
+                   path.StartsWith("/") ||
+                   path.StartsWith("./") ||
+                   path.StartsWith("../");
+        }
+
+        private string BuildColumnFilter(string columnName, string filterValue)
+        {
+            if (string.IsNullOrWhiteSpace(filterValue))
+                return string.Empty;
+
+            string columnFilter = "";
+
+            if (filterValue.Contains("!!"))
+            {
+                string[] parts = filterValue.Split(new[] { "!!" }, StringSplitOptions.None);
+                if (!string.IsNullOrWhiteSpace(parts[0]))
+                    columnFilter = $"{columnName} LIKE '%{parts[0].Trim()}%'";
+
+                for (int i = 1; i < parts.Length; i++)
+                {
+                    if (!string.IsNullOrWhiteSpace(parts[i]))
+                        columnFilter = AppendFilter(columnFilter, $"{columnName} NOT LIKE '%{parts[i].Trim()}%'", "AND");
+                }
+            }
+            else if (filterValue.Contains("&&"))
+            {
+                var parts = filterValue.Split(new[] { "&&" }, StringSplitOptions.RemoveEmptyEntries);
+                columnFilter = string.Join(" AND ", parts.Select(p => $"{columnName} LIKE '%{p.Trim()}%'"));
+            }
+            else if (filterValue.Contains("||"))
+            {
+                var parts = filterValue.Split(new[] { "||" }, StringSplitOptions.RemoveEmptyEntries);
+                columnFilter = string.Join(" OR ", parts.Select(p => $"{columnName} LIKE '%{p.Trim()}%'"));
+            }
+            else
+            {
+                columnFilter = $"{columnName} LIKE '%{filterValue}%'";
+            }
+
+            return !string.IsNullOrEmpty(columnFilter) ? $"({columnFilter})" : string.Empty;
+        }
+
+        private string AppendFilter(string existingFilter, string newFilter, string conjunction = "AND")
+        {
+            if (string.IsNullOrEmpty(existingFilter))
+                return newFilter;
+            if (string.IsNullOrEmpty(newFilter))
+                return existingFilter;
+            return $"{existingFilter} {conjunction} {newFilter}";
+        }
+
+        private string AppendCheckBoxFilters(string currentFilter, string reasonColumn)
+        {
+            var checkBoxFilters = new Dictionary<CheckBox, string>
     {
-        combinedFilter = combinedFilter.Substring(0, combinedFilter.Length - 5);
-    }
+        { CBdeleted, "File delete" },
+        { CBrenamednew, "Rename: new name" },
+        { CBrenamedold, "Rename: old name" },
+        { CBstreamchange, "Stream change" },
+        { CBbasicinfochange, "Basic info change" }
+    };
 
-    dataSourceEntries.DefaultView.RowFilter = combinedFilter;
-}
+            foreach (var checkBox in checkBoxFilters)
+            {
+                if (checkBox.Key.Checked)
+                {
+                    string newFilter = $"({reasonColumn} LIKE '%{checkBox.Value}%')";
+                    currentFilter = AppendFilter(currentFilter, newFilter);
+                }
+            }
+
+            return currentFilter;
+        }
+        private void btSearch_Click(object sender, EventArgs e)
+        {
+            performSearch();
+        }
+
         private void txtSearch_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
@@ -188,6 +233,31 @@ namespace JournalTrace.View.Layout
         private void datagJournalEntries_CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)
         {
             ContextMenuHelper.INSTANCE.ShowContext(datagJournalEntries, e);
+        }
+
+        private void CBdataextend_CheckedChanged(object sender, EventArgs e)
+        {
+            performSearch();
+        }
+
+        private void CBrenamed_CheckedChanged(object sender, EventArgs e)
+        {
+            performSearch();
+        }
+
+        private void CBdeleted_CheckedChanged(object sender, EventArgs e)
+        {
+            performSearch();
+        }
+
+        private void CBrenamedold_CheckedChanged(object sender, EventArgs e)
+        {
+            performSearch();
+        }
+
+        private void CBbasicinfochange_CheckedChanged(object sender, EventArgs e)
+        {
+            performSearch();
         }
     }
 }

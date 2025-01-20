@@ -16,18 +16,71 @@ using System.Windows.Forms;
 using JournalTrace.View.Util;
 using System.Diagnostics;
 using JournalTrace.View.Info;
+using JournalTrace.Resources;
 
 namespace JournalTrace
 {
     public partial class FormMain : Form
     {
+		
+        private Image backgroundImage;
+         
         public FormMain()
         {
             InitializeComponent();
+
+            SetStyle(
+                ControlStyles.UserPaint |
+                ControlStyles.AllPaintingInWmPaint |
+                ControlStyles.OptimizedDoubleBuffer |
+                ControlStyles.ResizeRedraw,
+                true
+            );
+            UpdateStyles();
+
+            AnimeGirl animeGirl = new AnimeGirl();
+            byte[] data = animeGirl.ImageData;
+            using (MemoryStream ms = new MemoryStream(data))
+            {
+                backgroundImage = Image.FromStream(ms);
+            }
+
             entryManager.NextStatusUpdate += EntryManager_NextStatusUpdate;
             entryManager.WorkEnded += EntryManager_WorkEnded;
             progbarStatus.Maximum = statusLenght * 10;
+        }
 
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            // we do NOT clear here, so we let OnPaint handle all painting, BECAUSE IT WILL RERENDER IMAGES NONSTOP AND IT WAS A PAIN TO FIGURE OUT
+            //base.OnPaintBackground(e); // is intentionally skipped for those reasons...
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            e.Graphics.Clear(BackColor);
+
+            base.OnPaint(e);
+
+            float formAspect = (float)ClientSize.Width / ClientSize.Height;
+            float imageAspect = (float)backgroundImage.Width / backgroundImage.Height;
+
+            int imageWidth, imageHeight;
+            if (formAspect > imageAspect)
+            {
+                imageHeight = ClientSize.Height;
+                imageWidth = (int)(imageHeight * imageAspect);
+            }
+            else
+            {
+                imageWidth = ClientSize.Width;
+                imageHeight = (int)(imageWidth / imageAspect);
+            }
+
+            int x = ClientSize.Width - imageWidth;
+            int y = (ClientSize.Height - imageHeight) / 2;
+
+            e.Graphics.DrawImage(backgroundImage, x, y, imageWidth, imageHeight);
         }
 
         #region entrymanager status update
@@ -113,7 +166,7 @@ namespace JournalTrace
 
             statusPhase = 1;
             NextStatus();
-            
+
 
             await Task.Run(() =>
             {
@@ -148,6 +201,7 @@ namespace JournalTrace
         }
 
 
+
         bool lastVisibility = true;
         private void StatusVisibility(bool v)
         {
@@ -171,7 +225,7 @@ namespace JournalTrace
             {
                 RelocateStatusMessage();
             }
-            
+
         }
 
 

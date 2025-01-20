@@ -186,6 +186,9 @@
   <data name="language" xml:space="preserve">
     <value>Language</value>
   </data>
+  <data name="lbUsnJrnl" xml:space="preserve">
+    <value>last modification $UsnJrnl:$J</value>
+  </data>
   <data name="lordyzagatdesc" xml:space="preserve">
     <value>Idea for the project, translated reasons</value>
   </data>

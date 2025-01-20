@@ -8,10 +8,11 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>JournalTrace</RootNamespace>
     <AssemblyName>JournalTrace</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -65,6 +66,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>pt.resx</DependentUpon>
     </Compile>
+    <Compile Include="Resources\AnimeGirl.cs" />
     <Compile Include="View\Info\FormInfo.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -120,6 +122,7 @@
     <EmbeddedResource Include="Language\Localization\en.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>en.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Language\Localization\pt.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -178,6 +181,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\dreamincode.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\animegirl.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
